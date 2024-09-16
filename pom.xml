@@ -1,0 +1,7 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <groupId>java-class-test</groupId>
+  <artifactId>sample-class</artifactId>
+  <version>1</version>
+</project>
