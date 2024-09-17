@@ -1,0 +1,47 @@
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+    creationTimestamp: null
+    name: flight-path-auto-tests-run-clone-build-push
+spec:
+    resourcetemplates:
+        - apiVersion: tekton.dev/v1beta1
+          kind: PipelineRun
+          metadata:
+            creationTimestamp: null
+            name: flight-path-auto-tests-clone-build-push-$(uid)
+          spec:
+            params:
+                - name: image-registry-url
+                  value: quay.io/test
+            pipelineRef:
+                name: flight-path-auto-tests-clone-build-push
+            serviceAccountName: flight-path-auto-tests-clone-push
+            workspaces:
+                - name: flight-path-auto-tests-shared-data
+                  volumeClaimTemplate:
+                    metadata:
+                        creationTimestamp: null
+                    spec:
+                        accessModes:
+                            - ReadWriteOnce
+                        resources:
+                            requests:
+                                storage: 1Gi
+                        storageClassName: default
+                    status: {}
+                - name: git-ssh-credentials
+                  secret:
+                    secretName: docker-credentials
+                - name: git-basic-auth-credentials
+                  secret:
+                    secretName: docker-credentials
+                - name: registry-credentials
+                  secret:
+                    secretName: docker-credentials
+          status: {}
+status: {}
+
+...

@@ -1,0 +1,7 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  creationTimestamp: null
+  name: flight-path-auto-tests-git-event
+spec: {}
+status: {}

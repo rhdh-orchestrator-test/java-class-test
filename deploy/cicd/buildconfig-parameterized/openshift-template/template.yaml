@@ -1,0 +1,68 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: flight-path-auto-tests-template
+  generatename: ""
+  namespace: ""
+  selflink: ""
+  uid: ""
+  resourceversion: ""
+  generation: 0
+  creationtimestamp: "0001-01-01T00:00:00Z"
+  deletiontimestamp: null
+  deletiongraceperiodseconds: null
+  labels: {}
+  annotations: {}
+  ownerreferences: []
+  finalizers: []
+  zzz_deprecatedclustername: ""
+  managedfields: []
+objects:
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-clone-build-push-sample-class
+    spec:
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: sample-class-latest:latest
+      postCommit: {}
+      resources: {}
+      source:
+        git:
+          ref: main
+          uri: ""
+        sourceSecret:
+          name: flight-path-auto-tests-git-repo-github-com
+        type: Git
+      strategy:
+        dockerStrategy:
+          dockerfilePath: '<TODO: insert path to the Dockerfile>'
+        type: Docker
+      triggers:
+        - generic:
+            secretReference:
+              name: flight-path-auto-tests-web-hook-sample-class
+          type: Generic
+    status:
+      lastVersion: 0
+  - apiVersion: v1
+    data:
+      ssh-privatekey: PFRPRE86IGluc2VydCB0aGUgcHJpdmF0ZSBzc2gga2V5IGZvciB5b3VyIGdpdCByZXBvPg==
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-git-repo-github-com
+    type: kubernetes.io/ssh-auth
+  - apiVersion: v1
+    data:
+      WebHookSecretKey: ZGVhODk0N2I1OWYyNWRhOA==
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-web-hook-sample-class
+    type: Opaque
+parameters: []
