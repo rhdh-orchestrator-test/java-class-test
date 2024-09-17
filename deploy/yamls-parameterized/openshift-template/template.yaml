@@ -1,0 +1,115 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: flight-path-auto-tests-template
+  generatename: ""
+  namespace: ""
+  selflink: ""
+  uid: ""
+  resourceversion: ""
+  generation: 0
+  creationtimestamp: "0001-01-01T00:00:00Z"
+  deletiontimestamp: null
+  deletiongraceperiodseconds: null
+  labels: {}
+  annotations: {}
+  ownerreferences: []
+  finalizers: []
+  zzz_deprecatedclustername: ""
+  managedfields: []
+objects:
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      creationTimestamp: null
+      labels:
+        move2kube.konveyor.io/service: sample-class
+      name: sample-class
+    spec:
+      host: qe.lab.redhat.com
+      path: /sample-class
+      port:
+        targetPort: port-8080
+      tls:
+        termination: passthrough
+      to:
+        kind: Service
+        name: sample-class
+        weight: 1
+    status:
+      ingress:
+        - {}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        move2kube.konveyor.io/service: sample-class
+      name: sample-class
+    spec:
+      ports:
+        - name: port-8080
+          port: 8080
+          targetPort: 8080
+      selector:
+        move2kube.konveyor.io/service: sample-class
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        move2kube.konveyor.io/service: sample-class
+      name: sample-class
+    spec:
+      replicas: ${{COMMON_REPLICAS}}
+      selector:
+        matchLabels:
+          move2kube.konveyor.io/service: sample-class
+      strategy: {}
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            move2kube.konveyor.io/service: sample-class
+          name: sample-class
+        spec:
+          containers:
+            - image: quay.io/test/sample-class:latest
+              imagePullPolicy: Always
+              name: sample-class
+              ports:
+                - containerPort: 8080
+              resources: {}
+          imagePullSecrets:
+            - name: docker-credentials
+          restartPolicy: Always
+          securityContext: {}
+    status: {}
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      creationTimestamp: null
+      labels:
+        move2kube.konveyor.io/service: sample-class-latest
+      name: sample-class-latest
+    spec:
+      lookupPolicy:
+        local: false
+      tags:
+        - annotations: null
+          from:
+            kind: DockerImage
+            name: sample-class
+          generation: null
+          importPolicy: {}
+          name: latest
+          referencePolicy:
+            type: ""
+    status:
+      dockerImageRepository: ""
+parameters:
+  - name: COMMON_REPLICAS
+    value: "2"

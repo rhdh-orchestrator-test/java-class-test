@@ -1,0 +1,21 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    move2kube.konveyor.io/service: sample-class
+  name: sample-class
+spec:
+  host: qe.lab.redhat.com
+  path: /sample-class
+  port:
+    targetPort: port-8080
+  tls:
+    termination: passthrough
+  to:
+    kind: Service
+    name: sample-class
+    weight: 1
+status:
+  ingress:
+    - {}
