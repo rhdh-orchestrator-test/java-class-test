@@ -1,0 +1,5 @@
+resources:
+  - sample-class-latest-imagestream.yaml
+  - sample-class-route.yaml
+  - sample-class-service.yaml
+  - sample-class-deployment.yaml
