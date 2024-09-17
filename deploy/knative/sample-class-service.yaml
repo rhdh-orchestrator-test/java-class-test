@@ -1,0 +1,22 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    move2kube.konveyor.io/service: sample-class
+  name: sample-class
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers:
+        - image: quay.io/1/sample-class:latest
+          imagePullPolicy: Always
+          name: sample-class
+          ports:
+            - containerPort: 8080
+          resources: {}
+      restartPolicy: Always
+      securityContext: {}
+status: {}
