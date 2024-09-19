@@ -1,0 +1,4 @@
+resources:
+  - sample-class-deployment.yaml
+  - sample-class-service.yaml
+  - 2-ingress.yaml
