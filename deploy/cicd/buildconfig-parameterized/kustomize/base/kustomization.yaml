@@ -1,0 +1,4 @@
+resources:
+  - flight-path-auto-tests-clone-build-push-sample-class-buildconfig.yaml
+  - flight-path-auto-tests-git-repo-github-com-secret.yaml
+  - flight-path-auto-tests-web-hook-sample-class-secret.yaml
