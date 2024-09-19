@@ -1,0 +1,26 @@
+
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+    creationTimestamp: null
+    labels:
+        move2kube.konveyor.io/service: sample-class-latest
+    name: sample-class-latest
+spec:
+    lookupPolicy:
+        local: false
+    tags:
+        - annotations: null
+          from:
+            kind: DockerImage
+            name: sample-class
+          generation: null
+          importPolicy: {}
+          name: latest
+          referencePolicy:
+            type: ""
+status:
+    dockerImageRepository: ""
+
+...
