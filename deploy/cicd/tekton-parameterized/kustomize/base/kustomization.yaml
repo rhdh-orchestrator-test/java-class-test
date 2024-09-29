@@ -1,0 +1,12 @@
+resources:
+  - flight-path-auto-tests-clone-push-serviceaccount.yaml
+  - flight-path-auto-tests-git-event-triggerbinding.yaml
+  - flight-path-auto-tests-git-repo-route.yaml
+  - flight-path-auto-tests-run-clone-build-push-triggertemplate.yaml
+  - flight-path-auto-tests-tekton-triggers-admin-role.yaml
+  - flight-path-auto-tests-clone-build-push-pipeline.yaml
+  - flight-path-auto-tests-git-repo-eventlistener.yaml
+  - flight-path-auto-tests-git-repo-github-com-secret.yaml
+  - flight-path-auto-tests-image-registry-secret.yaml
+  - flight-path-auto-tests-tekton-triggers-admin-rolebinding.yaml
+  - flight-path-auto-tests-tekton-triggers-admin-serviceaccount.yaml

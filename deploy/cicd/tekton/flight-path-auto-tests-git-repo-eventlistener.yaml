@@ -1,0 +1,17 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  creationTimestamp: null
+  name: flight-path-auto-tests-git-repo
+spec:
+  namespaceSelector: {}
+  resources: {}
+  serviceAccountName: flight-path-auto-tests-tekton-triggers-admin
+  triggers:
+    - bindings:
+        - ref: flight-path-auto-tests-git-event
+      template:
+        ref: flight-path-auto-tests-run-clone-build-push
+status:
+  configuration:
+    generatedName: ""

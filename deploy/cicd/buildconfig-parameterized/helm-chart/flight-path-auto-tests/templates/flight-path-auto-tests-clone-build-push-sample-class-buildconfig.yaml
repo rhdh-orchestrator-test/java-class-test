@@ -1,0 +1,35 @@
+
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+    creationTimestamp: null
+    name: flight-path-auto-tests-clone-build-push-sample-class
+spec:
+    nodeSelector: null
+    output:
+        to:
+            kind: ImageStreamTag
+            name: sample-class-latest:latest
+    postCommit: {}
+    resources: {}
+    source:
+        git:
+            ref: main
+            uri: ""
+        sourceSecret:
+            name: flight-path-auto-tests-git-repo-github-com
+        type: Git
+    strategy:
+        dockerStrategy:
+            dockerfilePath: '<TODO: insert path to the Dockerfile>'
+        type: Docker
+    triggers:
+        - generic:
+            secretReference:
+                name: flight-path-auto-tests-web-hook-sample-class
+          type: Generic
+status:
+    lastVersion: 0
+
+...

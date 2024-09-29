@@ -1,0 +1,233 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: flight-path-auto-tests-template
+  generatename: ""
+  namespace: ""
+  selflink: ""
+  uid: ""
+  resourceversion: ""
+  generation: 0
+  creationtimestamp: "0001-01-01T00:00:00Z"
+  deletiontimestamp: null
+  deletiongraceperiodseconds: null
+  labels: {}
+  annotations: {}
+  ownerreferences: []
+  finalizers: []
+  zzz_deprecatedclustername: ""
+  managedfields: []
+objects:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-tekton-triggers-admin
+    rules:
+      - apiGroups:
+          - triggers.tekton.dev
+        resources:
+          - eventlisteners
+          - triggerbindings
+          - triggertemplates
+        verbs:
+          - get
+      - apiGroups:
+          - tekton.dev
+        resources:
+          - pipelineruns
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - list
+          - watch
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-clone-push
+    secrets:
+      - name: flight-path-auto-tests-image-registry
+      - name: flight-path-auto-tests-git-repo-github-com
+  - apiVersion: triggers.tekton.dev/v1beta1
+    kind: TriggerBinding
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-git-event
+    spec: {}
+    status: {}
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      creationTimestamp: null
+      labels:
+        move2kube.konveyor.io/service: flight-path-auto-tests-git-repo
+      name: flight-path-auto-tests-git-repo
+    spec:
+      host: qe.lab.redhat.com
+      path: /el-flight-path-auto-tests-git-repo
+      port:
+        targetPort: port-8080
+      tls:
+        termination: passthrough
+      to:
+        kind: Service
+        name: flight-path-auto-tests-git-repo
+        weight: 1
+    status:
+      ingress:
+        - {}
+  - apiVersion: triggers.tekton.dev/v1beta1
+    kind: TriggerTemplate
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-run-clone-build-push
+    spec:
+      resourcetemplates:
+        - apiVersion: tekton.dev/v1beta1
+          kind: PipelineRun
+          metadata:
+            creationTimestamp: null
+            name: flight-path-auto-tests-clone-build-push-$(uid)
+          spec:
+            params:
+              - name: image-registry-url
+                value: quay.io/test
+            pipelineRef:
+              name: flight-path-auto-tests-clone-build-push
+            serviceAccountName: flight-path-auto-tests-clone-push
+            workspaces:
+              - name: flight-path-auto-tests-shared-data
+                volumeClaimTemplate:
+                  metadata:
+                    creationTimestamp: null
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 1Gi
+                    storageClassName: default
+                  status: {}
+              - name: git-ssh-credentials
+                secret:
+                  secretName: docker-credentials
+              - name: git-basic-auth-credentials
+                secret:
+                  secretName: docker-credentials
+              - name: registry-credentials
+                secret:
+                  secretName: docker-credentials
+          status: {}
+    status: {}
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-tekton-triggers-admin
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: flight-path-auto-tests-tekton-triggers-admin
+    subjects:
+      - kind: ServiceAccount
+        name: flight-path-auto-tests-tekton-triggers-admin
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-tekton-triggers-admin
+  - apiVersion: tekton.dev/v1beta1
+    kind: Pipeline
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-clone-build-push
+    spec:
+      params:
+        - description: registry-domain/namespace where the output image should be pushed.
+          name: image-registry-url
+          type: string
+      tasks:
+        - name: clone-1
+          params:
+            - name: url
+              value: git@github.com:rhdh-orchestrator-test/java-class-test
+            - name: revision
+              value: main
+            - name: deleteExisting
+              value: "true"
+          taskRef:
+            name: git-clone
+          workspaces:
+            - name: output
+              workspace: flight-path-auto-tests-shared-data
+            - name: ssh-directory
+              workspace: git-ssh-credentials
+        - name: build-push-1
+          params:
+            - name: IMAGE
+              value: $(params.image-registry-url)/sample-class
+            - name: DOCKERFILE
+              value: Dockerfile
+            - name: CONTEXT
+              value: .
+          runAfter:
+            - clone-1
+          taskRef:
+            name: kaniko
+          workspaces:
+            - name: source
+              workspace: flight-path-auto-tests-shared-data
+            - name: dockerconfig
+              workspace: registry-credentials
+      workspaces:
+        - description: This workspace will receive the cloned git repo and be passed to the kaniko task for building the image.
+          name: flight-path-auto-tests-shared-data
+        - description: This workspace provides the credentials (Docker config.json) for pushing images to the registry. See https://hub.tekton.dev/tekton/task/kaniko
+          name: registry-credentials
+        - description: This workspace provides the credentials (ssh private key) for cloning the git repo. See https://hub.tekton.dev/tekton/task/git-clone
+          name: git-ssh-credentials
+  - apiVersion: triggers.tekton.dev/v1beta1
+    kind: EventListener
+    metadata:
+      creationTimestamp: null
+      name: flight-path-auto-tests-git-repo
+    spec:
+      namespaceSelector: {}
+      resources: {}
+      serviceAccountName: flight-path-auto-tests-tekton-triggers-admin
+      triggers:
+        - bindings:
+            - ref: flight-path-auto-tests-git-event
+          template:
+            ref: flight-path-auto-tests-run-clone-build-push
+    status:
+      configuration:
+        generatedName: ""
+  - apiVersion: v1
+    data:
+      known_hosts: Z2l0aHViLmNvbSBzc2gtcnNhIEFBQUFCM056YUMxeWMyRUFBQUFCSXdBQUFRRUFxMkE3aFJHbWRubTl0VURiTzlJRFN3Qks2VGJRYStQWFlQQ1B5NnJiVHJUdHc3UEhrY2NLcnBwMHlWaHA1SGRFSWNLcjZwTGxWREJmT0xYOVFVc3lDT1Ywd3pmaklKTmxHRVlzZGxMSml6SGhibjJtVWp2U0FIUXFaRVRZUDgxZUZ6TFFOblBIdDRFVlZVaDdWZkRFU1U4NEtlem1ENVFsV3BYTG12VTMxL3lNZitTZTh4aEhUdktTQ1pJRkltV3dvRzZtYlVvV2Y5bnpwSW9hU2pCK3dlcXFVVW1wYWFhc1hWYWw3MkorVVgyQisyUlBXM1JjVDBlT3pRZ3FsSkwzUktyVEp2ZHNqRTNKRUF2R3EzbEdIU1pYeTI4RzNza3VhMlNtVmkvdzR5Q0U2Z2JPRHFuVFdsZzcrd0M2MDR5ZEdYQThWSmlTNWFwNDNKWGlVRkZBYVE9PQ==
+      ssh-privatekey: PFRPRE86IGluc2VydCB0aGUgcHJpdmF0ZSBzc2gga2V5IGZvciB5b3VyIGdpdCByZXBvPg==
+    kind: Secret
+    metadata:
+      annotations:
+        tekton.dev/git-0: github.com
+      creationTimestamp: null
+      name: flight-path-auto-tests-git-repo-github-com
+    type: kubernetes.io/ssh-auth
+  - apiVersion: v1
+    data:
+      .dockerconfigjson: PFRPRE86IGluc2VydCB5b3VyIGRvY2tlciBjb25maWcganNvbj4=
+    kind: Secret
+    metadata:
+      annotations:
+        tekton.dev/docker-0: ""
+      creationTimestamp: null
+      name: flight-path-auto-tests-image-registry
+    type: kubernetes.io/dockerconfigjson
+parameters: []
